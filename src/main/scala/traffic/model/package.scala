@@ -40,28 +40,20 @@ package object model {
         implicit val f = Json.format[CelltowerEvent]
     }
 
-    case class ClusterPrediction(subscriber: Subscriber,
-                                 celltower: Celltower,
-                                 point: Vector,
-                                 prediction: Int,
-                                 center: Vector,
-                                 var isOutlier: Boolean = false) {
+    case class ClusterPoint(subscriber: Subscriber,
+                            celltower: Celltower,
+                            point: Vector,
+                            var distanceFromCentroid: Double = 0.0,
+                            var outlier: Boolean = false) {
         def toJson = {
-            val subscriberJson = s""" "subscriber": ${Json.stringify(Json.toJson(subscriber))} """
-            val celltowerJson = s""" "celltower": ${Json.stringify(Json.toJson(celltower))} """
+            val subJson = s""" "subscriber": ${Json.stringify(Json.toJson(subscriber))} """
+            val cellJson = s""" "celltower": ${Json.stringify(Json.toJson(celltower))} """
             val pointJson = s""" "point": ${Json.stringify(Json.toJson(point.toArray))} """
-            val predictionJson = s""" "prediction": $prediction """
-            val centerJson = s""" "center": ${Json.stringify(Json.toJson(center.toArray))} """
-            val distJson = s""" "dist": $dist """
-            val outlierJson = s""" "outlier": $isOutlier """
+            val distJson = s""" "distance": $distanceFromCentroid """
+            val outJson = s""" "outlier": $outlier """
 
-            s"{ $subscriberJson, $celltowerJson, $pointJson, $predictionJson, $centerJson, $distJson, $outlierJson }"
+            s"""{ $subJson, $cellJson, $pointJson, $distJson, $outJson }"""
         }
-
-        /* calculate Euclidian distance to center */
-        lazy val dist = math.sqrt(center.toArray.zip(point.toArray).
-            map(p => p._1 - p._2).
-            map(d => d * d).sum)
     }
 
 }

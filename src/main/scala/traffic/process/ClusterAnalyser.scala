@@ -33,21 +33,6 @@ object ClusterAnalyser {
         }
         model.trainOn(trainingStream)
 
-        case class ClusterPoint(subscriber: Subscriber,
-                                celltower: Celltower,
-                                point: Vector,
-                                var distanceFromCentroid: Double = 0.0,
-                                var outlier: Boolean = false) {
-            def toJson = {
-                val subJson = s""" "subscriber": ${Json.stringify(Json.toJson(subscriber))} """
-                val cellJson = s""" "celltower": ${Json.stringify(Json.toJson(celltower))} """
-                val pointJson = s""" "point": ${Json.stringify(Json.toJson(point.toArray))} """
-                val distJson = s""" "distance": $distanceFromCentroid """
-                val outJson = s""" "outlier": $outlier """
-
-                s"""{ $subJson, $cellJson, $pointJson, $distJson, $outJson }"""
-            }
-        }
 
         /* predict */
         val predictions = vectorStream.map {
@@ -64,10 +49,8 @@ object ClusterAnalyser {
 
                 val centroid = model.latestModel.clusterCenters(prediction)
 
-                // calculate distance from last centroid
-                listOfPoints.foreach {
-                    p => p.distanceFromCentroid = dist(centroid, p.point)
-                }
+                // calculate distance from centroid
+                listOfPoints.foreach { p => p.distanceFromCentroid = dist(centroid, p.point) }
 
                 // check for outliers
                 if (listOfPoints.size > 4) {
@@ -92,7 +75,7 @@ object ClusterAnalyser {
                 s"""{ "prediction": $prediction,$centroidJson,$dimensionJson,$numPointsJson,$pointsJson }"""
         }
 
-        KafkaStreamPublisher.publishStream(kMeansCentroidTopic, jsonStream)
+        KafkaStreamPublisher.publishStream(kMeansOutlierTopic, jsonStream)
 
         /* grouping by subscriber
 

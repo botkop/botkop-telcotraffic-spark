@@ -28,7 +28,7 @@ case object AppConfig {
 
     val celltowerStatsTopic = conf.getString("kafka.producer.topics.celltower.stats")
     val subscriberStatsTopic = conf.getString("kafka.producer.topics.subscriber.stats")
-    val kMeansCentroidTopic = conf.getString("kafka.producer.topics.kmeans.centroid")
+    val kMeansOutlierTopic = conf.getString("kafka.producer.topics.kmeans.outlier")
 
     /* cassandra */
     val cassandraHost = conf.getString("cassandra.connection.host")
