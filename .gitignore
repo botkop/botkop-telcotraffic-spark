@@ -4,6 +4,7 @@ target
 /.idea_modules
 /.classpath
 /.project
+/.project/.sbtserver*
 /.settings
 /RUNNING_PID
 *.swp
