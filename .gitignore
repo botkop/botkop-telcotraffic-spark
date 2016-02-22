@@ -1,0 +1,13 @@
+target
+/.idea
+/.sbtserver
+/.idea_modules
+/.classpath
+/.project
+/.settings
+/RUNNING_PID
+*.swp
+work/*
+project/project
+project/work
+*.iml
