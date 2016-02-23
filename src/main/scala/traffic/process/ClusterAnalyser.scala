@@ -33,7 +33,6 @@ object ClusterAnalyser {
         }
         model.trainOn(trainingStream)
 
-
         /* predict */
         val predictions = vectorStream.map {
             case (subscriber, celltower, point) =>
@@ -44,7 +43,6 @@ object ClusterAnalyser {
         val groupedPredictions = predictions.groupByKeyAndWindow(kMeansWindowSize, kMeansSlideSize)
 
         val groupedPredictionsWithOutlier = groupedPredictions.map {
-
             case (prediction, listOfPoints) =>
 
                 val centroid = model.latestModel.clusterCenters(prediction)
@@ -111,9 +109,8 @@ object ClusterAnalyser {
         (lo, hi)
     }
 
-    def dist(v1: Vector, v2: Vector) =
-        math.sqrt(v1.toArray.zip(v2.toArray).
-            map(p => p._1 - p._2).
-            map(d => d * d).sum)
+    def dist(v1: Vector, v2: Vector) = math.sqrt(
+        v1.toArray.zip(v2.toArray).map(p => p._1 - p._2).map(d => d * d).sum
+    )
 
 }

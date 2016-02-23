@@ -1,7 +1,7 @@
 package traffic
 
 import com.datastax.spark.connector.streaming._
-import org.apache.spark.SparkConf
+import org.apache.spark.{SparkEnv, SparkConf}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.kafka.KafkaUtils
 import play.api.libs.json.Json
@@ -24,6 +24,8 @@ object TrafficStreamProcessor {
         ssc.checkpoint(checkpoint)
 
         process(ssc)
+
+        val actorSystem = SparkEnv.get.actorSystem
 
         ssc.start()
         ssc.awaitTermination()
