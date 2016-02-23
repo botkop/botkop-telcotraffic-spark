@@ -6,6 +6,9 @@ version := "1.0-SNAPSHOT"
 scalaVersion := "2.10.6"
 val sparkVersion = "1.6.0"
 
+lazy val botkopGeoProject = RootProject(uri("git://github.com/botkop/botkop-geo.git#scala_2.10"))
+lazy val root = (project in file(".")).dependsOn(botkopGeoProject)
+
 libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
     "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
