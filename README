@@ -76,7 +76,7 @@ Use case: Network Anomaly Detection
 The metrics on the celltower-topic input stream are clustered by dimensions defined in the configuration file.
 These dimensions are basically the names of the metrics you want to cluster on.
 For visualization purposes, it is recommended to set the number of dimensions = 2, or perhaps 3.
-For higher order visualization, you will probably need specialized tooling.
+Higher order visualizations are probably a bit more difficult to realize.
 
 Currently, the number of clusters is not detected automatically, and must be defined manually in the config file.
 It is best set to the number of celltower templates defined in the configuration of the traffic simulator.
