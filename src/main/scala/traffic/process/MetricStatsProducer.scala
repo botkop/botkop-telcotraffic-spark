@@ -6,7 +6,7 @@ import traffic.util.AppConfig._
 import traffic.model.{Celltower, MetricStats, Subscriber}
 import traffic.pub.KafkaStreamPublisher
 
-object MetricStatsProducer extends Serializable {
+object MetricStatsProducer {
 
     def produce(unifiedStream: DStream[(Subscriber, Celltower, Map[String, Double])]) = {
         produceSubscriberMetricStats(unifiedStream)

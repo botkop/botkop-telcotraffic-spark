@@ -1,12 +1,12 @@
 package traffic
 
 import com.datastax.spark.connector.streaming._
-import org.apache.spark.{SparkEnv, SparkConf}
+import org.apache.spark.SparkConf
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.kafka.KafkaUtils
 import play.api.libs.json.Json
 import traffic.model._
-import traffic.process.{ClusterAnalyser, MetricStatsProducer}
+import traffic.process.{Geofencer, ClusterAnalyser, MetricStatsProducer}
 import traffic.util.AppConfig._
 
 object TrafficStreamProcessor {
@@ -24,8 +24,6 @@ object TrafficStreamProcessor {
         ssc.checkpoint(checkpoint)
 
         process(ssc)
-
-        val actorSystem = SparkEnv.get.actorSystem
 
         ssc.start()
         ssc.awaitTermination()
@@ -62,6 +60,8 @@ object TrafficStreamProcessor {
         MetricStatsProducer.produce(unifiedStream)
 
         ClusterAnalyser.analyse(unifiedStream)
+
+        Geofencer.detect(unifiedStream)
 
     }
 

@@ -8,6 +8,7 @@ import org.apache.spark.streaming.Milliseconds
 import scala.collection.JavaConversions._
 
 case object AppConfig {
+
     val conf: Config = ConfigFactory.load()
     val checkpoint = conf.getString("spark.checkpoint")
     val batchSize = Milliseconds(conf.getLong("spark.batch.size"))
@@ -44,4 +45,9 @@ case object AppConfig {
     val kMeansDecayFactor = conf.getDouble("kmeans.decay.factor")
     val kMeansWindowSize = Milliseconds(conf.getLong("kmeans.window.size"))
     val kMeansSlideSize = Milliseconds(conf.getLong("kmeans.slide.size"))
+
+    /* geofencing */
+    val geofenceFile: String = conf.getString("geofence.file")
+    val geofenceTopic: String = conf.getString("kafka.producer.topics.geofence")
+
 }

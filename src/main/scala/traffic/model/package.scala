@@ -1,15 +1,11 @@
 package traffic
 
+import botkop.geo.LatLng
 import org.apache.spark.mllib.linalg.Vector
 import play.api.libs.json.Json
 
 
 package object model {
-
-    case class LatLng(lat: Double, lng: Double)
-    object LatLng {
-        implicit val f = Json.format[LatLng]
-    }
 
     case class Celltower(mcc: Int, mnc: Int, cell: Int, area: Int, location: LatLng)
     object Celltower {

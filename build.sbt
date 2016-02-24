@@ -18,10 +18,10 @@ libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-streaming-kafka" % sparkVersion exclude ("org.spark-project.spark", "unused"),
 
     // TODO : check which version of netty to use: the one from cassandra connector or the one from spark
-    "com.datastax.spark" % "spark-cassandra-connector_2.10" % "1.4.2" exclude ("io.netty", "*"),
+    "com.datastax.spark" %% "spark-cassandra-connector" % "1.4.2" exclude ("io.netty", "*"),
 
     "com.typesafe" % "config" % "1.3.0",
-    "com.typesafe.play" % "play-json_2.10" % "2.4.6"
+    "com.typesafe.play" %% "play-json" % "2.4.6"
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
