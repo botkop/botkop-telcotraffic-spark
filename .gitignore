@@ -8,7 +8,7 @@ target
 /.settings
 /RUNNING_PID
 *.swp
-work/*
+work/checkpoint
 project/project
 project/work
 *.iml
