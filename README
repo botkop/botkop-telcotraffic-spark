@@ -50,7 +50,7 @@ By default, the topics are:
 
 Use case: Network Congestion Monitoring
 ---------------------------------------
-Metric statistics are calculated for metrics produced on the celltower-topic by the traffic simulator.
+Statistics are calculated for metrics produced on the celltower-topic by the traffic simulator.
 The following base statistics are calculated in a sliding window (configurable with the parameters spark.metrics.window.size and spark.metrics.slide.size):
     count
     mean
