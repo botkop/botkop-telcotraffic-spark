@@ -109,6 +109,7 @@ object ClusterAnalyser {
         (lo, hi)
     }
 
+    /* euclidian distance between 2 vectors */
     def dist(v1: Vector, v2: Vector) = math.sqrt(
         v1.toArray.zip(v2.toArray).map(p => p._1 - p._2).map(d => d * d).sum
     )

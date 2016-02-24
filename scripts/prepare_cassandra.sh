@@ -8,7 +8,7 @@ USE traffic_keyspace ;
 DROP TABLE IF EXISTS attach_event;
 DROP TYPE IF EXISTS subscriber_type;
 
-CREATE TYPE IF NOT EXISTS subscriber_type (
+CREATE TYPE subscriber_type (
     id int,
     imsi text,
     msisdn text,
