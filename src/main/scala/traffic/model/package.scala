@@ -26,12 +26,12 @@ package object model {
         implicit val f = Json.format[Subscriber]
     }
 
-    case class AttachEvent(bearerId: String, subscriber: Subscriber, topic: String)
+    case class AttachEvent(bearerId: String, subscriber: Subscriber, topic: String, ts: Long)
     object AttachEvent {
         implicit val f = Json.format[AttachEvent]
     }
 
-    case class CelltowerEvent(celltower: Celltower, bearerId: String, metrics: Map[String, Double], topic: String)
+    case class CelltowerEvent(celltower: Celltower, bearerId: String, metrics: Map[String, Double], topic: String, ts: Long)
     object CelltowerEvent {
         implicit val f = Json.format[CelltowerEvent]
     }
@@ -53,5 +53,4 @@ package object model {
     }
 
 }
-
 

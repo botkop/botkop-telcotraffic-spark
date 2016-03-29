@@ -25,6 +25,7 @@ CREATE TABLE attach_event (
     bearer_id text,
     subscriber frozen<subscriber_type>,
     topic text,
+    ts bigint,
     PRIMARY KEY (bearer_id)
 );
 

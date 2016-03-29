@@ -28,12 +28,13 @@ object Geofencer extends LazyLogging {
             case (subscriber, celltower, metrics) =>
                 geofences
                     .filter(geofence => GeoUtil.containsLocation(celltower.location, geofence.polygon))
-                    .map { gf => (subscriber, gf) }
+                    .map { gf => (subscriber, celltower, gf) }
         } map { // map to json
-            case (subscriber, geofence) =>
+            case (subscriber, celltower, geofence) =>
                 val subJson = Json.stringify(Json.toJson(subscriber))
+                val cellJson = Json.stringify(Json.toJson(celltower))
                 val gfJson = Json.stringify(Json.toJson(geofence))
-                s"""{ "subscriber": $subJson, "geofence": $gfJson }"""
+                s"""{ "subscriber": $subJson, "celltower": $cellJson, "geofence": $gfJson }"""
         }
 
         KafkaStreamPublisher.publishStream(geofenceTopic, subscribersInGeofence)
