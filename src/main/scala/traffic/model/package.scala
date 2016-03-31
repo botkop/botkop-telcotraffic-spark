@@ -39,17 +39,23 @@ package object model {
     case class ClusterPoint(subscriber: Subscriber,
                             celltower: Celltower,
                             point: Vector,
+                            prediction: Int,
+                            centroid: Vector = null,
                             var distanceFromCentroid: Double = 0.0,
                             var outlier: Boolean = false) {
+
         def toJson = {
             val subJson = s""" "subscriber": ${Json.stringify(Json.toJson(subscriber))} """
             val cellJson = s""" "celltower": ${Json.stringify(Json.toJson(celltower))} """
             val pointJson = s""" "point": ${Json.stringify(Json.toJson(point.toArray))} """
+            val predictionJson = s""" "prediction": $prediction """
+            val centroidJson = s""" "centroid": ${Json.stringify(Json.toJson(centroid.toArray))} """
             val distJson = s""" "distance": $distanceFromCentroid """
             val outJson = s""" "outlier": $outlier """
 
-            s"""{ $subJson, $cellJson, $pointJson, $distJson, $outJson }"""
+            s"""{ $subJson, $cellJson, $pointJson, $predictionJson, $centroidJson, $distJson, $outJson }"""
         }
+
     }
 
 }

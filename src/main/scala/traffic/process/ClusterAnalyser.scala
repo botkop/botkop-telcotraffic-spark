@@ -11,6 +11,64 @@ import traffic.util.AppConfig._
 object ClusterAnalyser {
 
     def analyse(unifiedStream: DStream[(Subscriber, Celltower, Map[String, Double])]) = {
+        /* initialize model */
+        val model: StreamingKMeans = new StreamingKMeans()
+            .setK(kMeansK)
+            // .setHalfLife(1.5,"batches")
+            .setDecayFactor(kMeansDecayFactor)
+            .setRandomCenters(kMeansDimensions.length, 0.0)
+
+        /* keep metrics to analyse and transform into vector */
+        val vectorStream = unifiedStream.map {
+            case (subscriber, celltower, metrics) =>
+                val metricsToAnalyse = metrics.filterKeys(kMeansDimensions.contains).values.toArray
+                val vector = Vectors.dense(metricsToAnalyse)
+                (subscriber, celltower, vector)
+        }
+
+        /* train */
+        val trainingStream = vectorStream.map { case (_, _, metrics) =>
+            metrics
+        }
+        model.trainOn(trainingStream)
+
+        case class Centroid(prediction: Int, point: Vector)
+
+        /* predict */
+        val predictions = vectorStream
+            .window(kMeansWindowSize, kMeansSlideSize)
+            .map { case (subscriber, celltower, point) =>
+                val prediction = model.latestModel.predict(point)
+                val centroid = model.latestModel.clusterCenters(prediction)
+                val distanceFromCentroid = dist(point, centroid)
+                (prediction, ClusterPoint(subscriber, celltower, point, prediction, centroid, distanceFromCentroid))
+            }
+
+        val distances = predictions.map { case (prediction, point) => (prediction, List(point.distanceFromCentroid)) }
+                .reduceByKey(reduceFunc = (x, y) => x ::: y)
+
+        val thresholds = distances.map { case (prediction, distList: List[Double]) =>
+            val (lo, hi) = calculateThresholds(distList)
+            (prediction, (lo, hi))
+        }
+
+        val outliers = predictions
+            .join(thresholds)
+            .map { case (prediction, (point, (lo, hi))) =>
+                point.outlier = point.distanceFromCentroid < lo || point.distanceFromCentroid > hi
+                point
+            }
+
+        val jsonStream = outliers.map ( _.toJson)
+            .repartition(1)
+            .glom()
+            .map("""{ "points":  [""" + _.mkString(",") + "] }")
+
+        KafkaStreamPublisher.publishStream(kMeansOutlierTopic, jsonStream)
+
+    }
+
+    def _analyse(unifiedStream: DStream[(Subscriber, Celltower, Map[String, Double])]) = {
 
         /* initialize model */
         val model: StreamingKMeans = new StreamingKMeans()
@@ -37,7 +95,7 @@ object ClusterAnalyser {
         val predictions = vectorStream.map {
             case (subscriber, celltower, point) =>
                 val prediction = model.latestModel.predict(point)
-                (prediction, ClusterPoint(subscriber, celltower, point))
+                (prediction, ClusterPoint(subscriber, celltower, point, prediction))
         }
 
         val groupedPredictions = predictions.groupByKeyAndWindow(kMeansWindowSize, kMeansSlideSize)
@@ -52,7 +110,7 @@ object ClusterAnalyser {
 
                 // check for outliers
                 if (listOfPoints.size > 4) {
-                    val (lo, hi) = thresholds[ClusterPoint](listOfPoints, _.distanceFromCentroid)
+                    val (lo, hi) = calculateThresholds[ClusterPoint](listOfPoints, _.distanceFromCentroid)
                     listOfPoints.foreach { p =>
                         p.outlier = p.distanceFromCentroid < lo || p.distanceFromCentroid > hi
                     }
@@ -96,8 +154,23 @@ object ClusterAnalyser {
 
     }
 
+    def calculateThresholds(dl: List[Double]) = {
+        if (dl.size <= 4) {
+            (Double.MinValue, Double.MaxValue)
+        } else {
+            val v = dl.sortWith(_ < _)
+            val q1 = v(v.length / 4)
+            val q3 = v(v.length / 4 * 3)
+            val iqr = q3 - q1
+            val threshold = iqr * 1.5
+            val lo = q1 - threshold
+            val hi = q3 + threshold
+            (lo, hi)
+        }
+    }
+
     /* calculate interquartile range and thresholds */
-    def thresholds[T](it: Iterable[T], c: (T) => Double) = {
+    def calculateThresholds[T](it: Iterable[T], c: (T) => Double) = {
         require(it.size > 4)
         val v = it.toList.sortWith(c(_) < c(_))
         val q1 = c(v(v.length / 4))
