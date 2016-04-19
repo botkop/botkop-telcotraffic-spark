@@ -25,6 +25,8 @@ object SnappyTrafficStreamProcessor {
 
     val snsc = new SnappyStreamingContext(sparkConf, batchSize)
 
+    snsc.checkpoint(checkpoint)
+
     process(snsc)
 
     snsc.start()
