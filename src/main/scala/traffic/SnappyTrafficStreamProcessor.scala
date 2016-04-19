@@ -1,9 +1,7 @@
 package traffic
 
-import botkop.geo.LatLng
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.catalyst.CatalystTypeConverters
-import org.apache.spark.sql.types.{DataType, StructType}
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.streaming.SnappyStreamingContext
 import org.apache.spark.streaming.kafka.KafkaUtils
 import play.api.libs.json.Json
@@ -13,6 +11,19 @@ import traffic.util.AppConfig._
 
 object SnappyTrafficStreamProcessor {
 
+  // keep the two different for now due to an issue in joining snappy tables
+  // with spark partitioning (spark will skip partitioning table if it matches)
+
+  /** number of partitions in the snappydata table */
+  private val PARTITIONS = 11
+
+  /**
+   * The value of "spark.default.parallelism" i.e. number of partitions
+   * used for joins (on the fly re-partitioning). Setting this to zero
+   * will disable it and fallback to the default in Spark.
+   */
+  private val PARALLELISM = 8
+
   def main(args: Array[String]): Unit = {
 
     val sparkConf = new SparkConf()
@@ -20,8 +31,12 @@ object SnappyTrafficStreamProcessor {
       .setAppName("SnappyTrafficStreamProcessor")
       .set("spark.logConf", "true")
       .set("spark.akka.logLifecycleEvents", "true")
-      // to run against an embedded SnappyData cluster
-      // .set("snappydata.store.locators", "localhost[10334]")
+    // to run against an embedded SnappyData cluster
+    // .set("snappydata.store.locators", "localhost[10334]")
+
+    if (PARALLELISM > 0) {
+      sparkConf.set("spark.default.parallelism", PARALLELISM.toString)
+    }
 
     val snsc = new SnappyStreamingContext(sparkConf, batchSize)
 
@@ -42,11 +57,12 @@ object SnappyTrafficStreamProcessor {
 
     /* save the attach stream to the database */
     val sc = snsc.snappyContext
-    sc.sql("set spark.sql.shuffle.partitions=8")
+    sc.sql(s"set spark.sql.shuffle.partitions=$PARALLELISM")
     val attachDFStream = snsc.createSchemaDStream(attachStream)
+
     sc.dropTable(attachTable, ifExists = true)
     sc.createTable(attachTable, "column", attachDFStream.schema,
-      Map.empty[String, String])
+      Map("buckets" -> PARTITIONS.toString))
     attachDFStream.foreachDataFrame(_.write.insertInto(attachTable))
 
     /* capture the celltower stream and transform into celltower events */
@@ -58,32 +74,20 @@ object SnappyTrafficStreamProcessor {
 
     /* join the celltower stream with the persisted attach stream (on bearerId) */
     val unifiedStream = celltowerStream.transform { rdd =>
-      val df = sc.createDataFrame(rdd)
-      val joinDf = df.join(sc.table(attachTable), "bearerId").select(
-        "subscriber", "celltower", "metrics")
-      val schema = joinDf.schema
-      val subscriberArity = schema(0).dataType.asInstanceOf[StructType].length
-      val celltowerArity = schema(1).dataType.asInstanceOf[StructType].length
-      val metricsType = schema(2).dataType
-      joinDf.queryExecution.toRdd.mapPartitions { iter =>
-        val method = CatalystTypeConverters.getClass.getDeclaredMethod(
-          "createToScalaConverter", classOf[DataType])
-        method.setAccessible(true)
-        val converter = method.invoke(
-          CatalystTypeConverters, metricsType).asInstanceOf[Any => Any]
+      val df = sc.table(attachTable)
+      val subscriberArity = df.schema(1).dataType.asInstanceOf[StructType].length
+      val dfRdd = df.queryExecution.toRdd.mapPartitions { iter =>
         iter.map { row =>
-          val c1 = row.getStruct(0, subscriberArity)
-          val c2 = row.getStruct(1, celltowerArity)
-          val c2_4 = c2.getStruct(4, 2)
-          val metrics = converter(row.getMap(2))
+          val bearerId = row.getString(0)
+          val c1 = row.getStruct(1, subscriberArity)
           val subscriber = Subscriber(c1.getInt(0), c1.getString(1),
             c1.getString(2), c1.getString(3), c1.getString(4), c1.getString(5),
             c1.getString(6), c1.getString(7), c1.getString(8), c1.getString(9))
-          val cellTower = Celltower(c2.getInt(0), c2.getInt(1), c2.getInt(2),
-            c2.getInt(3), LatLng(c2_4.getDouble(0), c2_4.getDouble(1)))
-          (subscriber, cellTower, metrics.asInstanceOf[Map[String, Double]])
+          (bearerId, subscriber)
         }
       }
+      rdd.map(ev => (ev.bearerId, ev)).join(dfRdd)
+        .map(ev => (ev._2._2, ev._2._1.celltower, ev._2._1.metrics))
     }
 
     unifiedStream.cache()
