@@ -10,6 +10,7 @@ import traffic.util.AppConfig._
 object ClusterAnalyser {
 
     def analyse(unifiedStream: DStream[(Subscriber, Celltower, Map[String, Double])]) = {
+
         /* initialize model */
         val model: StreamingKMeans = new StreamingKMeans()
             .setK(kMeansK)
@@ -18,7 +19,8 @@ object ClusterAnalyser {
             .setRandomCenters(kMeansDimensions.length, 0.0)
 
         /* keep metrics to analyse and transform into vector */
-        val vectorStream = unifiedStream.map {
+        val vectorStream = unifiedStream
+            .map {
             case (subscriber, celltower, metrics) =>
                 val metricsToAnalyse = metrics.filterKeys(kMeansDimensions.contains).values.toArray
                 val vector = Vectors.dense(metricsToAnalyse)
@@ -32,7 +34,7 @@ object ClusterAnalyser {
         model.trainOn(trainingStream)
 
         val predictions = vectorStream
-            // .window(kMeansWindowSize, kMeansSlideSize) // ==> windowing causes massive cpu usage in snappy
+            .window(kMeansWindowSize, kMeansSlideSize)
             .map { case (subscriber, celltower, point) =>
                 val prediction = model.latestModel.predict(point)
                 val centroid = model.latestModel.clusterCenters(prediction)

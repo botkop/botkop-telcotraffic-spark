@@ -12,3 +12,7 @@ work/checkpoint
 project/project
 project/work
 *.iml
+BACKUPGFXD*
+DRLK_IFGFXD-DEFAULT-DISKSTORE.lk
+datadictionary/
+*.log*
