@@ -27,7 +27,7 @@ object SnappyTrafficStreamProcessor {
   def main(args: Array[String]): Unit = {
 
     val sparkConf = new SparkConf()
-      .setMaster("local[*]")
+      // .setMaster("local[*]")
       .setAppName("SnappyTrafficStreamProcessor")
       .set("spark.logConf", "true")
       .set("spark.akka.logLifecycleEvents", "true")

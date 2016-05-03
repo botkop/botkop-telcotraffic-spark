@@ -1,5 +1,5 @@
 
-name := """botkop-telcotraffic-spark"""
+name := """botkop-telcotraffic-snappy"""
 
 version := "1.0-SNAPSHOT"
 
