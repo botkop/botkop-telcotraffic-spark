@@ -10,18 +10,9 @@ lazy val botkopGeoProject = RootProject(uri("git://github.com/botkop/botkop-geo.
 lazy val root = (project in file(".")).dependsOn(botkopGeoProject)
 
 libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
     "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-streaming" % sparkVersion % "provided",
-
     "org.apache.spark" %% "spark-streaming-kafka" % sparkVersion exclude ("org.spark-project.spark", "unused"),
-
     "io.snappydata" %% "snappy-core" % "0.2-SNAPSHOT" % "provided",
-
-    // TODO : check which version of netty to use: the one from cassandra connector or the one from spark
-    "com.datastax.spark" %% "spark-cassandra-connector" % "1.4.2" exclude ("io.netty", "*"),
-
     "com.typesafe" % "config" % "1.3.0",
     "com.typesafe.play" %% "play-json" % "2.4.6"
 )
