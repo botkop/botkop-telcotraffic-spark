@@ -16,7 +16,7 @@ Prerequisites
 - a running kafka system (see http://kafka.apache.org/)
 - the traffic simulator code (see https://github.com/botkop/botkop-telcotraffic-simulator)
 
-Assuming kafka and cassandra are set up and running, proceed with the following steps:
+Assuming kafka is set up and running, proceed with the following steps:
 - configure the traffic simulator for kafka, by updating the the file conf/application.conf and setting the kafkaBroker as one of the messageBrokers.
   For example:
 
